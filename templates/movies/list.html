@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2 class="mb-3">Movies</h2>
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-sm-9">
+      <input class="form-control" name="q" value="{{ q }}" placeholder="Search titles/descriptions">
+    </div>
+    <div class="col-sm-3 d-grid">
+      <button class="btn btn-primary" type="submit">Search</button>
+    </div>
+  </form>
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+    {% for m in movies %}
+      <div class="col">
+        <div class="card h-100">
+          {% if m.image_url %}<img src="{{ m.image_url }}" class="card-img-top" alt="{{ m.title }}">{% endif %}
+          <div class="card-body">
+            <h5 class="card-title">{{ m.title }}</h5>
+            <p class="card-text small mb-1">★ {{ m.avg_rating|default:"0" }} ({{ m.review_count }} reviews)</p>
+            <p class="card-text fw-semibold mb-2">${{ m.price }}</p>
+            <a class="btn btn-sm btn-outline-primary" href="/movies/{{ m.id }}/">Details</a>
+            <a class="btn btn-sm btn-outline-success" href="/cart/add/{{ m.id }}/">Add to cart</a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p>No movies yet.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

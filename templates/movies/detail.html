@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="row">
+    <div class="col-md-4">
+      {% if movie.image_url %}
+        <img src="{{ movie.image_url }}" class="img-fluid rounded mb-3" alt="{{ movie.title }}">
+      {% endif %}
+    </div>
+    <div class="col-md-8">
+      <h2>{{ movie.title }}</h2>
+      <p class="fs-5 fw-semibold">${{ movie.price }}</p>
+      <p>{{ movie.description }}</p>
+      <p>
+        <a class="btn btn-success btn-sm" href="/cart/add/{{ movie.id }}/">Add to cart</a>
+        <a class="btn btn-outline-secondary btn-sm" href="/cart/">View cart</a>
+      </p>
+      <p><a href="/movies/">← Back to list</a></p>
+    </div>
+  </div>
+
+  <hr class="my-4">
+  <h3>Reviews</h3>
+  {% if reviews %}
+    <ul class="list-group mb-3">
+      {% for r in reviews %}
+        <li class="list-group-item">
+          <div class="d-flex justify-content-between">
+            <strong>{{ r.user.username }}</strong>
+            <span>★ {{ r.rating }} • {{ r.created_at|date:"Y-m-d H:i" }}</span>
+          </div>
+          <div>{{ r.text }}</div>
+          {% if user.is_authenticated and r.user_id == user.id %}
+            <div class="mt-2">
+              <a class="btn btn-sm btn-outline-primary" href="/reviews/{{ r.id }}/edit/">Edit</a>
+              <a class="btn btn-sm btn-outline-danger" href="/reviews/{{ r.id }}/delete/">Delete</a>
+            </div>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No reviews yet.</p>
+  {% endif %}
+
+  {% if user.is_authenticated %}
+    {% if user_review %}
+      <div class="alert alert-info">You already reviewed this movie.
+        <a href="/reviews/{{ user_review.id }}/edit/">Edit</a> or
+        <a href="/reviews/{{ user_review.id }}/delete/">Delete</a>.
+      </div>
+    {% else %}
+      <h4>Add your review</h4>
+      <form method="post" action="/reviews/add/{{ movie.id }}/" class="mb-4">
+        {% csrf_token %}
+        <div class="mb-2">{{ form.rating }}</div>
+        <div class="mb-2">{{ form.text }}</div>
+        <button class="btn btn-primary btn-sm" type="submit">Submit</button>
+      </form>
+    {% endif %}
+  {% else %}
+    <p><a href="/accounts/login/?next=/movies/{{ movie.id }}/">Log in</a> to write a review.</p>
+  {% endif %}
+{% endblock %}

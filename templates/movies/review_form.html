@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+  <h3>{% if edit %}Edit{% else %}Add{% endif %} review for {{ movie.title }}</h3>
+  <form method="post" class="mt-3">
+    {% csrf_token %}
+    <div class="mb-2">{{ form.rating }}</div>
+    <div class="mb-2">{{ form.text }}</div>
+    <button class="btn btn-primary" type="submit">{% if edit %}Save{% else %}Submit{% endif %}</button>
+    <a class="btn btn-outline-secondary" href="/movies/{{ movie.id }}/">Cancel</a>
+  </form>
+{% endblock %}

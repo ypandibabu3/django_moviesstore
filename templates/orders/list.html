@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Your orders</h2>
+  {% if orders %}
+    <div class="accordion" id="ordersAcc">
+      {% for o in orders %}
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="h{{ o.id }}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c{{ o.id }}">
+              Order #{{ o.id }} — {{ o.created_at|date:"Y-m-d H:i" }} — Total ${{ o.total_amount }}
+            </button>
+          </h2>
+          <div id="c{{ o.id }}" class="accordion-collapse collapse" data-bs-parent="#ordersAcc">
+            <div class="accordion-body">
+              <ul class="list-group">
+                {% for it in o.items.all %}
+                  <li class="list-group-item d-flex justify-content-between">
+                    <span>{{ it.movie.title }} — ${{ it.price }} × {{ it.quantity }}</span>
+                    <span>${{ it.line_total }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>No orders yet.</p>
+  {% endif %}
+  <p class="mt-3"><a href="/movies/">Back to movies</a></p>
+{% endblock %}
