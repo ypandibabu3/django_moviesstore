@@ -14,7 +14,11 @@
     {% for m in movies %}
       <div class="col">
         <div class="card h-100">
-          {% if m.image_url %}<img src="{{ m.image_url }}" class="card-img-top" alt="{{ m.title }}">{% endif %}
+          {% if m.image %}
+            <img src="{{ m.image.url }}" class="card-img-top" alt="{{ m.title }}">
+          {% elif m.image_url %}
+            <img src="{{ m.image_url }}" class="card-img-top" alt="{{ m.title }}">
+          {% endif %}
           <div class="card-body">
             <h5 class="card-title">{{ m.title }}</h5>
             <p class="card-text small mb-1">★ {{ m.avg_rating|default:"0" }} ({{ m.review_count }} reviews)</p>

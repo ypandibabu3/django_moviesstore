@@ -7,6 +7,8 @@ class Movie(models.Model):
     title = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=7, decimal_places=2)
     description = models.TextField()
+    # New: optional uploaded image (preferred). Keep `image_url` as a fallback for external images.
+    image = models.ImageField(upload_to="movies/images/", blank=True, null=True)
     image_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -2,7 +2,9 @@
 {% block content %}
   <div class="row">
     <div class="col-md-4">
-      {% if movie.image_url %}
+      {% if movie.image %}
+        <img src="{{ movie.image.url }}" class="img-fluid rounded mb-3" alt="{{ movie.title }}">
+      {% elif movie.image_url %}
         <img src="{{ movie.image_url }}" class="img-fluid rounded mb-3" alt="{{ movie.title }}">
       {% endif %}
     </div>
