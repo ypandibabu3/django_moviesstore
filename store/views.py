@@ -4,6 +4,7 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Avg, Count
 from .models import Movie, Review, Order, OrderItem
+from .models import ReviewReport
 from .forms import SignUpForm, ReviewForm
 
 CART_SESSION_KEY = "cart"
@@ -46,6 +47,10 @@ def movie_list(request):
 def movie_detail(request, pk):
     movie = get_object_or_404(Movie, pk=pk)
     reviews = movie.reviews.select_related("user").order_by("-created_at")
+    # Exclude reviews that the current user has reported (so they disappear for that user)
+    if request.user.is_authenticated:
+        reported_qs = ReviewReport.objects.filter(user=request.user).values_list("review_id", flat=True)
+        reviews = reviews.exclude(id__in=reported_qs)
     user_review = None
     if request.user.is_authenticated:
         user_review = reviews.filter(user=request.user).first()
@@ -55,6 +60,20 @@ def movie_detail(request, pk):
         "movies/detail.html",
         {"movie": movie, "reviews": reviews, "user_review": user_review, "form": form},
     )
+
+
+@login_required
+def report_review(request, pk):
+    """Create a Report for a review so it will be hidden for the reporting user.
+
+    Accepts POST with optional `reason`. Redirects back to movie_detail.
+    """
+    review = get_object_or_404(Review, pk=pk)
+    if request.method == "POST":
+        reason = request.POST.get("reason", "").strip()
+        # Create or ignore duplicate reports by the same user
+        ReviewReport.objects.get_or_create(review=review, user=request.user, defaults={"reason": reason})
+    return redirect("movie_detail", pk=review.movie_id)
 
 def signup(request):
     if request.method == "POST":

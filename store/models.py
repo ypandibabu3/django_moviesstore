@@ -25,6 +25,23 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.movie.title} – {self.user.username} ({self.rating})"
+
+class ReviewReport(models.Model):
+    """Track which reviews have been reported by which users.
+
+    This allows reported reviews to be hidden for the reporting user without
+    deleting the review for everyone.
+    """
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name="reports")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reported_reviews")
+    reason = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("review", "user")
+
+    def __str__(self):
+        return f"Report by {self.user.username} for review {self.review_id}"
     
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="orders")

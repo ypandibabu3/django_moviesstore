@@ -29,10 +29,18 @@
             <span>★ {{ r.rating }} • {{ r.created_at|date:"Y-m-d H:i" }}</span>
           </div>
           <div>{{ r.text }}</div>
-          {% if user.is_authenticated and r.user_id == user.id %}
+          {% if user.is_authenticated %}
             <div class="mt-2">
-              <a class="btn btn-sm btn-outline-primary" href="/reviews/{{ r.id }}/edit/">Edit</a>
-              <a class="btn btn-sm btn-outline-danger" href="/reviews/{{ r.id }}/delete/">Delete</a>
+              {% if r.user_id == user.id %}
+                <a class="btn btn-sm btn-outline-primary" href="/reviews/{{ r.id }}/edit/">Edit</a>
+                <a class="btn btn-sm btn-outline-danger" href="/reviews/{{ r.id }}/delete/">Delete</a>
+              {% else %}
+                <form method="post" action="/reviews/{{ r.id }}/report/" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="reason" value="inappropriate">
+                  <button class="btn btn-sm btn-outline-warning" type="submit">Report</button>
+                </form>
+              {% endif %}
             </div>
           {% endif %}
         </li>
