@@ -47,10 +47,6 @@ def movie_list(request):
 def movie_detail(request, pk):
     movie = get_object_or_404(Movie, pk=pk)
     reviews = movie.reviews.select_related("user").order_by("-created_at")
-    # Exclude reviews that the current user has reported (so they disappear for that user)
-    if request.user.is_authenticated:
-        reported_qs = ReviewReport.objects.filter(user=request.user).values_list("review_id", flat=True)
-        reviews = reviews.exclude(id__in=reported_qs)
     user_review = None
     if request.user.is_authenticated:
         user_review = reviews.filter(user=request.user).first()
@@ -70,9 +66,13 @@ def report_review(request, pk):
     """
     review = get_object_or_404(Review, pk=pk)
     if request.method == "POST":
+        # Optional: keep an audit of the report
         reason = request.POST.get("reason", "").strip()
-        # Create or ignore duplicate reports by the same user
         ReviewReport.objects.get_or_create(review=review, user=request.user, defaults={"reason": reason})
+        # Delete the review so it disappears for everyone (including anonymous users)
+        movie_id = review.movie_id
+        review.delete()
+        return redirect("movie_detail", pk=movie_id)
     return redirect("movie_detail", pk=review.movie_id)
 
 def signup(request):
