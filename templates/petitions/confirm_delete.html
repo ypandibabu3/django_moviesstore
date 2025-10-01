@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Petition{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0">Confirm Delete Petition</h3>
+        </div>
+        <div class="card-body">
+            <p>Are you sure you want to delete the petition for <strong>{{ petition.movie_title }}</strong>?</p>
+            <p class="text-muted">This action cannot be undone. All votes will be lost.</p>
+            
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                <a href="{% url 'petition_list' %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

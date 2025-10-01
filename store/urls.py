@@ -20,4 +20,9 @@ urlpatterns = [
 
     path("checkout/", views.checkout, name="checkout"),
     path("orders/", views.order_list, name="order_list"),
+    
+    # Petition URLs
+    path("petitions/", views.petition_list, name="petition_list"),
+    path("petitions/<int:petition_id>/vote/", views.petition_vote, name="petition_vote"),
+    path("petitions/<int:petition_id>/delete/", views.petition_delete, name="petition_delete"),
 ]

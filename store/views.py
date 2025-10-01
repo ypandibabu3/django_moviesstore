@@ -3,9 +3,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Avg, Count
-from .models import Movie, Review, Order, OrderItem
-from .models import ReviewReport
-from .forms import SignUpForm, ReviewForm
+from django.contrib import messages
+from .models import Movie, Review, Order, OrderItem, ReviewReport, Petition, PetitionVote
+from .forms import SignUpForm, ReviewForm, PetitionForm
 
 CART_SESSION_KEY = "cart"
 
@@ -181,3 +181,83 @@ def checkout(request):
 def order_list(request):
     orders = request.user.orders.prefetch_related("items__movie").order_by("-created_at")
     return render(request, "orders/list.html", {"orders": orders})
+
+
+# NEW PETITION VIEWS
+@login_required
+def petition_list(request):
+    """Display all petitions and allow creating new ones"""
+    petitions = Petition.objects.select_related('creator').prefetch_related('votes').all()
+    
+    # Add vote information for each petition
+    for petition in petitions:
+        petition.user_voted = petition.user_has_voted(request.user)
+        petition.user_vote_type = petition.user_vote(request.user)
+    
+    form = PetitionForm()
+    
+    if request.method == 'POST':
+        form = PetitionForm(request.POST)
+        if form.is_valid():
+            petition = form.save(commit=False)
+            petition.creator = request.user
+            petition.save()
+            messages.success(request, f'Petition for "{petition.movie_title}" created successfully!')
+            return redirect('petition_list')
+    
+    return render(request, 'petitions/list.html', {
+        'petitions': petitions,
+        'form': form
+    })
+
+
+@login_required
+def petition_vote(request, petition_id):
+    """Allow users to vote on a petition"""
+    petition = get_object_or_404(Petition, pk=petition_id)
+    
+    if request.method == 'POST':
+        vote_type = request.POST.get('vote_type')
+        
+        if vote_type not in ['yes', 'no']:
+            messages.error(request, 'Invalid vote type.')
+            return redirect('petition_list')
+        
+        # Check if user already voted
+        existing_vote = PetitionVote.objects.filter(
+            petition=petition,
+            user=request.user
+        ).first()
+        
+        if existing_vote:
+            # Update existing vote
+            if existing_vote.vote_type != vote_type:
+                existing_vote.vote_type = vote_type
+                existing_vote.save()
+                messages.success(request, f'Your vote has been changed to "{vote_type}".')
+            else:
+                messages.info(request, f'You have already voted "{vote_type}" on this petition.')
+        else:
+            # Create new vote
+            PetitionVote.objects.create(
+                petition=petition,
+                user=request.user,
+                vote_type=vote_type
+            )
+            messages.success(request, f'Your vote "{vote_type}" has been recorded!')
+    
+    return redirect('petition_list')
+
+
+@login_required
+def petition_delete(request, petition_id):
+    """Allow petition creator to delete their petition"""
+    petition = get_object_or_404(Petition, pk=petition_id, creator=request.user)
+    
+    if request.method == 'POST':
+        movie_title = petition.movie_title
+        petition.delete()
+        messages.success(request, f'Petition for "{movie_title}" has been deleted.')
+        return redirect('petition_list')
+    
+    return render(request, 'petitions/confirm_delete.html', {'petition': petition})

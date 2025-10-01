@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Movie Petitions{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Movie Petitions</h1>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Create New Petition Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Request a New Movie</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ form.movie_title.id_for_label }}" class="form-label">
+                        {{ form.movie_title.label }}
+                    </label>
+                    {{ form.movie_title }}
+                    {% if form.movie_title.errors %}
+                        <div class="text-danger">{{ form.movie_title.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                        {{ form.description.label }}
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="text-danger">{{ form.description.errors }}</div>
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary">Create Petition</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- List of Existing Petitions -->
+    <h2 class="mb-3">Active Petitions</h2>
+    
+    {% if petitions %}
+        {% for petition in petitions %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4 class="card-title">{{ petition.movie_title }}</h4>
+                            <p class="card-text">{{ petition.description }}</p>
+                            <p class="text-muted small">
+                                <strong>Created by:</strong> {{ petition.creator.username }} | 
+                                <strong>Date:</strong> {{ petition.created_at|date:"M d, Y" }}
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h5>Votes</h5>
+                                <div class="d-flex justify-content-around mb-3">
+                                    <div>
+                                        <span class="badge bg-success fs-4">{{ petition.yes_votes_count }}</span>
+                                        <div class="small">Yes</div>
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-danger fs-4">{{ petition.no_votes_count }}</span>
+                                        <div class="small">No</div>
+                                    </div>
+                                </div>
+                                
+                                {% if petition.user_voted %}
+                                    <p class="text-muted small">
+                                        You voted: 
+                                        <strong class="{% if petition.user_vote_type == 'yes' %}text-success{% else %}text-danger{% endif %}">
+                                            {{ petition.user_vote_type|upper }}
+                                        </strong>
+                                    </p>
+                                    <form method="post" action="{% url 'petition_vote' petition.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        {% if petition.user_vote_type == 'yes' %}
+                                            <button type="submit" name="vote_type" value="no" class="btn btn-outline-danger btn-sm">
+                                                Change to No
+                                            </button>
+                                        {% else %}
+                                            <button type="submit" name="vote_type" value="yes" class="btn btn-outline-success btn-sm">
+                                                Change to Yes
+                                            </button>
+                                        {% endif %}
+                                    </form>
+                                {% else %}
+                                    <form method="post" action="{% url 'petition_vote' petition.id %}" class="d-flex gap-2 justify-content-center">
+                                        {% csrf_token %}
+                                        <button type="submit" name="vote_type" value="yes" class="btn btn-success">
+                                            Vote Yes
+                                        </button>
+                                        <button type="submit" name="vote_type" value="no" class="btn btn-danger">
+                                            Vote No
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                
+                                {% if petition.creator == request.user %}
+                                    <form method="post" action="{% url 'petition_delete' petition.id %}" class="mt-2">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            Delete Petition
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            <p class="mb-0">No petitions yet. Be the first to request a movie!</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

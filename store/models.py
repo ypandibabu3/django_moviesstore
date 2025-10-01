@@ -66,3 +66,59 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.movie.title} x {self.quantity}"
+
+
+# NEW PETITION MODELS
+class Petition(models.Model):
+    """Movie petition that users can create to request movies be added to catalog"""
+    movie_title = models.CharField(max_length=200)
+    description = models.TextField(help_text="Why should this movie be added?")
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="petitions")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def yes_votes_count(self):
+        return self.votes.filter(vote_type='yes').count()
+    
+    def no_votes_count(self):
+        return self.votes.filter(vote_type='no').count()
+    
+    def total_votes_count(self):
+        return self.votes.count()
+    
+    def user_has_voted(self, user):
+        """Check if a user has already voted on this petition"""
+        if not user.is_authenticated:
+            return False
+        return self.votes.filter(user=user).exists()
+    
+    def user_vote(self, user):
+        """Get the user's vote on this petition if it exists"""
+        if not user.is_authenticated:
+            return None
+        vote = self.votes.filter(user=user).first()
+        return vote.vote_type if vote else None
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Petition for '{self.movie_title}' by {self.creator.username}"
+
+
+class PetitionVote(models.Model):
+    """Track votes on petitions"""
+    VOTE_CHOICES = [
+        ('yes', 'Yes'),
+        ('no', 'No'),
+    ]
+    
+    petition = models.ForeignKey(Petition, on_delete=models.CASCADE, related_name="votes")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="petition_votes")
+    vote_type = models.CharField(max_length=3, choices=VOTE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("petition", "user")  # One vote per user per petition
+
+    def __str__(self):
+        return f"{self.user.username} voted '{self.vote_type}' on {self.petition.movie_title}"
